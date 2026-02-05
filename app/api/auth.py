@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.schemas.user import UserCreate, UserRead
 from app.db.repositories.user import create_user, get_user_by_email
+from app.core.security import verify_password, create_access_token
+from app.schemas.auth import LoginRequest, Token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -19,3 +21,16 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> UserRead:
 
     user = create_user(db, payload.email, payload.password)
     return user
+
+@router.post("/login", response_model=Token)
+def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
+    user = get_user_by_email(db, payload.email)
+    if user is None or not verify_password(payload.password, user.hashed_password):
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = "Incorrect email or password",
+            headers = {"WWW-Authenticate": "Bearer"},
+        )
+
+    token = create_access_token(subject=user.email)
+    return Token(access_token=token, token_type="bearer")
