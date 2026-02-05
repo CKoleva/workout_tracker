@@ -10,4 +10,4 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
 
-workouts = relationship("Workout", back_populates="user")
+    workouts = relationship("Workout", back_populates="user")
