@@ -6,6 +6,7 @@ from app.schemas.user import UserCreate, UserRead
 from app.db.repositories.user import create_user, get_user_by_email
 from app.core.security import verify_password, create_access_token
 from app.schemas.auth import LoginRequest, Token
+from app.core.auth import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -34,3 +35,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
 
     token = create_access_token(subject=user.email)
     return Token(access_token=token, token_type="bearer")
+
+@router.get("/me", response_model=UserRead)
+def read_current_user(current_user = Depends(get_current_user)):
+    return current_user
