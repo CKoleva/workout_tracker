@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.db.models.workout import Workout
 
@@ -43,3 +44,24 @@ def list_workouts_for_user_in_period(
         query = query.filter(Workout.date <= to_date)
 
     return query.all()
+
+def get_workout_summary(
+    db: Session,
+    user_id: int,
+    from_date: datetime | None = None,
+    to_date: datetime | None = None,
+) -> tuple[int, int, int]:
+    query = db.query(
+        func.count(Workout.id),
+        func.coalesce(func.sum(Workout.duration), 0),
+        func.coalesce(func.sum(Workout.calories), 0),
+    ).filter(Workout.user_id == user_id)
+
+    if from_date is not None:
+        query = query.filter(Workout.date >= from_date)
+
+    if to_date is not None:
+        query = query.filter(Workout.date <= to_date)
+
+    total_workouts, total_duration, total_calories = query.one()
+    return int(total_workouts), int(total_duration), int(total_calories)
