@@ -17,3 +17,6 @@ def create_user(db: Session, email: str, password: str) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+def list_users(db: Session):
+    return db.query(User).all()
